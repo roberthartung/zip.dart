@@ -1,5 +1,5 @@
-name: zipdart
+name: zip
 version: 0.0.1
 author: Robert Hartung <robert-hartung@web.de>
 description: A zip implementation written in pure Dart.
-homepage: github.com/roberthartung/dartzip
+homepage: http://github.com/roberthartung/zip.dart

@@ -1,4 +1,4 @@
-part of zipdart;
+part of zip;
 
 class _ArchiveExtraDataRecord {
   static const ARCHIVE_EXTRA_DATA_SIGNATURE = 0x08064b50;

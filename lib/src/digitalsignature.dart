@@ -1,4 +1,4 @@
-part of zipdart;
+part of zip;
 
 class _DigitalSignature {
   static const int SIGNATURE = 0x05054b50;

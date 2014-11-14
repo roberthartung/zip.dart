@@ -1,4 +1,4 @@
-part of zipdart;
+part of zip;
 
 class Offset {
   int offset = 0;
