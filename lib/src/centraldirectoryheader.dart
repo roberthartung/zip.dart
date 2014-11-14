@@ -1,4 +1,4 @@
-part of zip;
+part of zipdart;
 
 class _CentralDirectoryHeader {
   static const SIGNATURE = 0x02014b50;

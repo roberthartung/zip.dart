@@ -1,4 +1,4 @@
-part of zip;
+part of zipdart;
 
 class File {
   @ByteLength()

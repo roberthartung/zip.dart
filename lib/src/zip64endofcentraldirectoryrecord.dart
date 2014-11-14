@@ -1,4 +1,4 @@
-part of zip;
+part of zipdart;
 
 class _Zip64EndOfCentralDirectoryRecord {
   static const int SIGNATURE = 0x06064b50;

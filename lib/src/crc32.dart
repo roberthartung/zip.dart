@@ -1,4 +1,4 @@
-part of zip;
+part of zipdart;
 
 class CRC32 {
   static final List<int> TABLE = const [

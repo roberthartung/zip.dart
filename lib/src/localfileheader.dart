@@ -1,4 +1,4 @@
-part of zip;
+part of zipdart;
 
 class _LocalFileHeader { 
   static const int SIGNATURE = 0x04034b50;

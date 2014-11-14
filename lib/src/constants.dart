@@ -1,4 +1,4 @@
-part of zip;
+part of zipdart;
 
 /**
  * version_made_by

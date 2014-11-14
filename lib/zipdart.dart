@@ -1,4 +1,4 @@
-library zip;
+library zipdart;
 
 import 'dart:typed_data';
 import 'dart:mirrors';

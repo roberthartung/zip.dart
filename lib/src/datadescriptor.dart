@@ -1,4 +1,4 @@
-part of zip;
+part of zipdart;
 
 // TODO(rh) - depends on flags!
 // @DependsFlag([#syb], 3)
