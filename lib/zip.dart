@@ -2,6 +2,9 @@ library zip;
 
 import 'dart:typed_data';
 import 'dart:mirrors';
+// Add Files from String and Blobs
+import 'dart:html';
+import 'dart:async';
 
 part 'src/offset.dart';
 part 'src/bytelength.dart';
@@ -25,7 +28,7 @@ part 'src/constants.dart';
  */
 
 /**
- * Reads data from [data] at [offset] into [t]
+ * Reads data from [data] at [offset] into class of type [t]
  */
 
 dynamic _readIntoClass(Type t, ByteData data, Offset offset) {
@@ -118,6 +121,10 @@ void _writeToBuffer(dynamic source, ByteData data, Offset offset) {
 }
 
 class Archive {
+  /**
+   * List of files
+   */
+  
   List<File> files = [];
 
   _CentralDirectoryHeader centralDirectoryHeader;
@@ -126,8 +133,17 @@ class Archive {
 
   List<_CentralDirectoryHeader> _centralDirectory = [];
 
+  /**
+   * Creates a new, empty archive
+   */
+  
   Archive.empty() {
+    
   }
+  
+  /**
+   * Returns the contents of this archive as a byte list
+   */
 
   Uint8List get() {
     // TODO(rh) compress before packing so compressed_size and other attributes get updated correctly
@@ -177,6 +193,10 @@ class Archive {
 
     return bytes;
   }
+  
+  /**
+   * Creates a new archive from a a byte array
+   */
 
   Archive.raw(Uint8List bytes) {
     ByteData data = new ByteData.view(bytes.buffer);
@@ -184,6 +204,7 @@ class Archive {
     while (offset < data.lengthInBytes && data.getUint32(offset.offset, Endianness.LITTLE_ENDIAN) == _LocalFileHeader.SIGNATURE) {
       offset += 4;
       File f = _readIntoClass(File, data, offset);
+      f.name = new String.fromCharCodes(f.localFileHeader.file_name);
       /*
       if(f.localFileHeader.compressed_size & 0x8 == 0x8) {
         print('deflate');
@@ -222,6 +243,10 @@ class Archive {
 
     throw "Parsing Error at ${offset.offset}/${data.lengthInBytes}";
   }
+  
+  /**
+   * Adds file [name] with contents [data] to this archive
+   */
 
   File addFile(String name, Uint8List data) {
     File f = new File(name, data);
@@ -230,6 +255,36 @@ class Archive {
     _centralDirectory.add(header);
     return f;
   }
+  
+  Future<File> addFileFromBlob(String name, Blob blob, {onProgress(ProgressEvent)}) {
+    Completer completer = new Completer();
+    
+    FileReader reader = new FileReader();
+    if(onProgress != null) {
+      reader.onProgress.listen(onProgress);
+    }
+    reader.onLoad.listen((ProgressEvent ev) {
+      completer.complete(addFile(name, reader.result));
+    });
+    reader.readAsArrayBuffer(blob);
+    
+    return completer.future;
+  }
+  
+  Future<File> addFileFromUrl(String name, String url, {onProgress(ProgressEvent)}) {
+    Completer completer = new Completer();
+    HttpRequest.request(url, method: 'GET', responseType: 'blob', onProgress: onProgress).then((HttpRequest request) {
+      addFileFromBlob(name, request.response, onProgress: onProgress).then((f) {
+        completer.complete(f);
+      });
+    });
+    
+    return completer.future;
+  }
+  
+  /**
+   * Adds file [name] with string contents [data] to this archive
+   */
 
   File addFileFromString(String name, String data) {
     return addFile(name, new Uint8List.fromList(data.codeUnits));

@@ -7,6 +7,12 @@ class File {
   @DerivedLength(const [#localFileHeader, #compressed_size])
   List<int> data;
   
+  /**
+   * This file's name and path
+   */
+  
+  String name;
+  
   //@ByteLength()
   //_DataDescriptor dataDescriptor;
   //  + (dataDescriptor != null ? dataDescriptor.length : 0)
@@ -17,6 +23,7 @@ class File {
   }
   
   File(String name, Uint8List data) {
+    this.name = name;
     this.data = data;
     // unencrypted = encrypted
     localFileHeader = new _LocalFileHeader(
