@@ -112,6 +112,7 @@ void _writeToBuffer(dynamic source, ByteData data, Offset offset) {
         pntr = pntr.getField(s);
       });
       int size = pntr.reflectee;
+      // TODO(rh): can we do this more efficient?
       val.forEach((int i) {
         data.setUint8(offset.offset, i);
         offset += 1;
@@ -146,7 +147,7 @@ class Archive {
    */
 
   Uint8List get() {
-    // TODO(rh) compress before packing so compressed_size and other attributes get updated correctly
+    // TODO(rh): compress before packing so compressed_size and other attributes get updated correctly
     int length = 0;
     Offset offset = new Offset();
     int centralDirOffset = 0;
@@ -154,6 +155,13 @@ class Archive {
     // Calculate Length
     files.forEach((File f) {
       // length + SIGNATURE
+      _CentralDirectoryHeader cdh = new _CentralDirectoryHeader(
+          file_name: f.localFileHeader.file_name,
+          crc32: f.localFileHeader.crc32, 
+          uncompressed_size: f.data.length,
+          compressed_size: f.data.length,
+          relative_offset_of_local_header: centralDirOffset);
+      _centralDirectory.add(cdh);
       centralDirOffset += f.length + 4;
     });
 
@@ -175,6 +183,8 @@ class Archive {
 
     // Files
     files.forEach((File f) {
+      print('Writing file ${f.name}');
+      
       data.setUint32(offset.offset, _LocalFileHeader.SIGNATURE, Endianness.LITTLE_ENDIAN);
       offset += 4;
       _writeToBuffer(f, data, offset);
@@ -184,6 +194,7 @@ class Archive {
     _centralDirectory.forEach((_CentralDirectoryHeader cdh) {
       data.setUint32(offset.offset, _CentralDirectoryHeader.SIGNATURE, Endianness.LITTLE_ENDIAN);
       offset += 4;
+      print('Writing CentralDirectoryHeader for file ' + new String.fromCharCodes(cdh.file_name));
       _writeToBuffer(cdh, data, offset);
     });
 
@@ -216,25 +227,21 @@ class Archive {
     while (offset < data.lengthInBytes && data.getUint32(offset.offset, Endianness.LITTLE_ENDIAN) == _CentralDirectoryHeader.SIGNATURE) {
       offset += 4;
       _CentralDirectoryHeader h = _readIntoClass(_CentralDirectoryHeader, data, offset);
-      print(h);
     }
 
     while (offset < data.lengthInBytes && data.getUint32(offset.offset, Endianness.LITTLE_ENDIAN) == _DigitalSignature.SIGNATURE) {
       offset += 4;
       _DigitalSignature s = _readIntoClass(_DigitalSignature, data, offset);
-      print(s);
     }
 
     while (offset < data.lengthInBytes && data.getUint32(offset.offset, Endianness.LITTLE_ENDIAN) == _Zip64EndOfCentralDirectoryRecord.SIGNATURE) {
       offset += 4;
       _Zip64EndOfCentralDirectoryRecord e = _readIntoClass(_Zip64EndOfCentralDirectoryRecord, data, offset);
-      print(e);
     }
 
     while (offset < data.lengthInBytes && data.getUint32(offset.offset, Endianness.LITTLE_ENDIAN) == _EndOfCentralDirectoryRecord.SIGNATURE) {
       offset += 4;
       _EndOfCentralDirectoryRecord e = _readIntoClass(_EndOfCentralDirectoryRecord, data, offset);
-      print(e);
     }
 
     if (offset.offset == data.lengthInBytes) return;
@@ -247,12 +254,12 @@ class Archive {
   /**
    * Adds file [name] with contents [data] to this archive
    */
-
+  
   File addFile(String name, Uint8List data) {
     File f = new File(name, data);
+    // _CentralDirectoryHeader header = new _CentralDirectoryHeader(file_name: new Uint8List.fromList(name.codeUnits), crc32: f.localFileHeader.crc32, uncompressed_size: data.length, compressed_size: data.length);
     files.add(f);
-    _CentralDirectoryHeader header = new _CentralDirectoryHeader(file_name: new Uint8List.fromList(name.codeUnits), crc32: f.localFileHeader.crc32, uncompressed_size: data.length, compressed_size: data.length);
-    _centralDirectory.add(header);
+    // _centralDirectory.add(header);
     return f;
   }
   
